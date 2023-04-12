@@ -26,3 +26,6 @@ If you have feedback or comments on this repo don't hesitate to write me a messa
 
 Thank you for checking it out.
 
+## chapter 3 
+
+if 문은 함수의 시작에만 배치한다.  
