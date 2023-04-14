@@ -25,63 +25,31 @@ interface Input2 {
   isDown(): boolean;
 }
 
-class Right implements Input2 {
-  isRight(): boolean {
-    return true;
-  }
-  isLeft(): boolean {
-    return false;
-  }
-  isUp(): boolean {
-    return false;
-  }
-  isDown(): boolean {
-    return false;
+interface Input {
+  handle(): void
+}
+
+class Right implements Input {
+  handle(): void {
+    moveHorizontal(1);
   }
 }
 
-class Left implements Input2 {
-  isRight(): boolean {
-    return false;
-  }
-  isLeft(): boolean {
-    return true;
-  }
-  isUp(): boolean {
-    return false;
-  }
-  isDown(): boolean {
-    return false;
+class Left implements Input {
+  handle(): void {
+    moveHorizontal(-1);
   }
 }
 
-class Up implements Input2 {
-  isRight(): boolean {
-    return false;
-  }
-  isLeft(): boolean {
-    return false;
-  }
-  isUp(): boolean {
-    return true;
-  }
-  isDown(): boolean {
-    return false;
+class Up implements Input {
+  handle(): void {
+    moveVertical(-1);
   }
 }
 
-class Down implements Input2 {
-  isRight(): boolean {
-    return false;
-  }
-  isLeft(): boolean {
-    return false;
-  }
-  isUp(): boolean {
-    return false;
-  }
-  isDown(): boolean {
-    return true;
+class Down implements Input {
+  handle(): void {
+    moveVertical(1);
   }
 }
 
@@ -96,7 +64,7 @@ let map: Tile[][] = [
   [2, 2, 2, 2, 2, 2, 2, 2],
 ];
 
-let inputs: Input2[] = [];
+let inputs: Input[] = [];
 
 function remove(tile: Tile) {
   for (let y = 0; y < map.length; y++) {
@@ -179,19 +147,8 @@ function updateTile(y: number, x: number) {
 function handleInputs() {
   while (inputs.length > 0) {
     let current = inputs.pop();
-    handleInput(current);
+    current.handle();
   }
-}
-
-function handleInput(current: Input2) {
-  if (current.isLeft())
-    moveHorizontal(-1);
-  else if (current.isRight())
-    moveHorizontal(1);
-  else if (current.isUp())
-    moveVertical(-1);
-  else if (current.isDown())
-    moveVertical(1);
 }
 
 function draw() {
