@@ -16,7 +16,6 @@ enum RawTile {
 
 interface FallingState {
   isFalling(): boolean;
-  isResting(): boolean;
   moveHorizontal(tile: Tile, dx: number): void;
 }
 
@@ -25,9 +24,6 @@ class Falling implements FallingState {
   }
   isFalling(): boolean {
     return true;
-  }
-  isResting(): boolean {
-    return false;
   }
 }
 
@@ -41,9 +37,6 @@ class Resting implements FallingState {
   }
   isFalling(): boolean {
     return false;
-  }
-  isResting(): boolean {
-    return true;
   }
 }
 interface Input {
