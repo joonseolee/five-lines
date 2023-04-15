@@ -84,9 +84,25 @@ interface Tile {
   moveHorizontal(dx: number): void;
   isStony(): boolean;
   isBoxy(): boolean;
+  drop(): void;
+  rest(): void;
+  isFalling(): boolean;
+  canFall(): boolean;
 }
 
 class Air implements Tile {
+  canFall(): boolean {
+    throw new Error("Method not implemented.");
+  }
+  isFalling(): boolean {
+    throw new Error("Method not implemented.");
+  }
+  drop(): void {
+    throw new Error("Method not implemented.");
+  }
+  rest(): void {
+    throw new Error("Method not implemented.");
+  }
   isStony(): boolean {
     return false;
   }
@@ -137,6 +153,18 @@ class Air implements Tile {
 }
 
 class Flux implements Tile {
+  canFall(): boolean {
+    throw new Error("Method not implemented.");
+  }
+  isFalling(): boolean {
+    throw new Error("Method not implemented.");
+  }
+  drop(): void {
+    throw new Error("Method not implemented.");
+  }
+  rest(): void {
+    throw new Error("Method not implemented.");
+  }
   isStony(): boolean {
     return false;
   }
@@ -189,6 +217,18 @@ class Flux implements Tile {
 }
 
 class Unbreakable implements Tile {
+  canFall(): boolean {
+    throw new Error("Method not implemented.");
+  }
+  isFalling(): boolean {
+    throw new Error("Method not implemented.");
+  }
+  drop(): void {
+    throw new Error("Method not implemented.");
+  }
+  rest(): void {
+    throw new Error("Method not implemented.");
+  }
   isStony(): boolean {
     return false;
   }
@@ -241,6 +281,18 @@ class Unbreakable implements Tile {
 }
 
 class Player implements Tile {
+  canFall(): boolean {
+    throw new Error("Method not implemented.");
+  }
+  isFalling(): boolean {
+    throw new Error("Method not implemented.");
+  }
+  drop(): void {
+    throw new Error("Method not implemented.");
+  }
+  rest(): void {
+    throw new Error("Method not implemented.");
+  }
   isStony(): boolean {
     return false;
   }
@@ -292,6 +344,18 @@ class Player implements Tile {
 
 class Stone implements Tile {
   constructor(private falling: FallingState) {}
+  canFall(): boolean {
+    return true;
+  }
+  isFalling(): boolean {
+    return this.falling.isFalling();
+  }
+  drop(): void {
+    this.falling = new Falling();
+  }
+  rest(): void {
+    this.falling = new Resting();
+  }
   isStony(): boolean {
     return true;
   }
@@ -344,6 +408,18 @@ class Stone implements Tile {
 }
 
 class Box implements Tile {
+  canFall(): boolean {
+    return true;
+  }
+  isFalling(): boolean {
+    throw new Error("Method not implemented.");
+  }
+  drop(): void {
+    throw new Error("Method not implemented.");
+  }
+  rest(): void {
+    throw new Error("Method not implemented.");
+  }
   isStony(): boolean {
     return false;
   }
@@ -400,6 +476,18 @@ class Box implements Tile {
 }
 
 class FallingBox implements Tile {
+  canFall(): boolean {
+    return true;
+  }
+  isFalling(): boolean {
+    return true;
+  }
+  drop(): void {
+    throw new Error("Method not implemented.");
+  }
+  rest(): void {
+    throw new Error("Method not implemented.");
+  }
   isStony(): boolean {
     return false;
   }
@@ -452,6 +540,18 @@ class FallingBox implements Tile {
 }
 
 class Key1 implements Tile {
+  canFall(): boolean {
+    throw new Error("Method not implemented.");
+  }
+  isFalling(): boolean {
+    throw new Error("Method not implemented.");
+  }
+  drop(): void {
+    throw new Error("Method not implemented.");
+  }
+  rest(): void {
+    throw new Error("Method not implemented.");
+  }
   isStony(): boolean {
     return false;
   }
@@ -505,6 +605,18 @@ class Key1 implements Tile {
 }
 
 class Lock1 implements Tile {
+  canFall(): boolean {
+    throw new Error("Method not implemented.");
+  }
+  isFalling(): boolean {
+    throw new Error("Method not implemented.");
+  }
+  drop(): void {
+    throw new Error("Method not implemented.");
+  }
+  rest(): void {
+    throw new Error("Method not implemented.");
+  }
   isStony(): boolean {
     return false;
   }
@@ -557,6 +669,18 @@ class Lock1 implements Tile {
 }
 
 class Key2 implements Tile {
+  canFall(): boolean {
+    throw new Error("Method not implemented.");
+  }
+  isFalling(): boolean {
+    throw new Error("Method not implemented.");
+  }
+  drop(): void {
+    throw new Error("Method not implemented.");
+  }
+  rest(): void {
+    throw new Error("Method not implemented.");
+  }
   isStony(): boolean {
     return false;
   }
@@ -610,6 +734,18 @@ class Key2 implements Tile {
 }
 
 class Lock2 implements Tile {
+  canFall(): boolean {
+    throw new Error("Method not implemented.");
+  }
+  isFalling(): boolean {
+    throw new Error("Method not implemented.");
+  }
+  drop(): void {
+    throw new Error("Method not implemented.");
+  }
+  rest(): void {
+    throw new Error("Method not implemented.");
+  }
   isStony(): boolean {
     return false;
   }
@@ -765,18 +901,13 @@ function updateMap() {
 }
 
 function updateTile(y: number, x: number) {
-  if ((map[y][x].isStony())
-    && map[y + 1][x].isAir()) {
-    map[y + 1][x] = new Stone(new Falling());
+  if ((map[y][x].canFall())
+  && map[y + 1][x].isAir()) {
+    map[y][x].drop();
+    map[y + 1][x] = map[y][x];
     map[y][x] = new Air();
-  } else if ((map[y][x].isBoxy())
-    && map[y + 1][x].isAir()) {
-    map[y + 1][x] = new FallingBox();
-    map[y][x] = new Air();
-  } else if (map[y][x].isFallingStone()) {
-    map[y][x] = new Stone(new Resting());
-  } else if (map[y][x].isFallingBox()) {
-    map[y][x] = new Box();
+  } else if (map[y][x].isFalling()) {
+    map[y][x].rest();
   }
 }
 
