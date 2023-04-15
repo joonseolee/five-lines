@@ -14,6 +14,41 @@ enum RawTile {
   KEY2, LOCK2
 }
 
+class KeyConfiguration {
+  constructor(
+    private color: string,
+    private _1: boolean,
+    private removeStrategy: RemoveStrategy
+  ) {}
+
+  getColor() {
+    return this.color;
+  }
+
+  is1() {
+    return this._1;
+  }
+
+  getRemoveStrategy() {
+    return this.removeStrategy;
+  }
+}
+
+interface RemoveStrategy {
+  check(tile: Tile): boolean;
+}
+class RemoveLock1 implements RemoveStrategy {
+  check(tile: Tile): boolean {
+    return tile.isLock1();
+  }
+}
+
+class RemoveLock2 implements RemoveStrategy {
+  check(tile: Tile): boolean {
+    return tile.isLock2();
+  }
+}
+
 interface FallingState {
   isFalling(): boolean;
   moveHorizontal(tile: Tile, dx: number): void;
@@ -586,7 +621,11 @@ class FallingBox implements Tile {
   }
 }
 
-class Key1 implements Tile {
+class Key implements Tile {
+  constructor(
+    private color: string,
+    private removeStrategy: RemoveStrategy
+  ) {}
   update(x: number, y: number): void {
     throw new Error("Method not implemented.");
   }
@@ -609,11 +648,11 @@ class Key1 implements Tile {
     return false;
   }
   moveHorizontal(dx: number): void {
-    remove(new RemoveLock1());
+    remove(this.removeStrategy);
     moveToTile(playerx + dx, playery);
   }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = "#ffcc00";
+    g.fillStyle = this.color;
     g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
   isAir(): boolean {
@@ -654,7 +693,12 @@ class Key1 implements Tile {
   }
 }
 
-class Lock1 implements Tile {
+class Locker implements Tile {
+  constructor(
+    private color: string,
+    private lock1: boolean,
+    private lock2: boolean
+  ) {}
   update(x: number, y: number): void {
     throw new Error("Method not implemented.");
   }
@@ -680,7 +724,7 @@ class Lock1 implements Tile {
   
   }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = "#ffcc00";
+    g.fillStyle = this.color;
     g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
   isAir(): boolean {
@@ -705,145 +749,10 @@ class Lock1 implements Tile {
     return false;
   }
   isLock1(): boolean {
-    return true;
+    return this.lock1;
   }
   isLock2(): boolean {
-    return false;
-  }
-  isFlux(): boolean {
-    return false;
-  }
-  isUnbreakable(): boolean {
-    return false;
-  }
-  isStone(): boolean {
-    return false;
-  }
-}
-
-class Key2 implements Tile {
-  update(x: number, y: number): void {
-    throw new Error("Method not implemented.");
-  }
-  canFall(): boolean {
-    throw new Error("Method not implemented.");
-  }
-  isFalling(): boolean {
-    throw new Error("Method not implemented.");
-  }
-  drop(): void {
-    throw new Error("Method not implemented.");
-  }
-  rest(): void {
-    throw new Error("Method not implemented.");
-  }
-  isStony(): boolean {
-    return false;
-  }
-  isBoxy(): boolean {
-    return false;
-  }
-  moveHorizontal(dx: number): void {
-    remove(new RemoveLock2());
-    moveToTile(playerx + dx, playery);
-  }
-  draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = "#00ccff";
-    g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-  }
-  isAir(): boolean {
-    return false;
-  }
-  isPlayer(): boolean {
-    return false;
-  }
-  isFallingStone(): boolean {
-    return false;
-  }
-  isBox(): boolean {
-    return false;
-  }
-  isFallingBox(): boolean {
-    return false;
-  }
-  isKey1(): boolean {
-    return false;
-  }
-  isKey2(): boolean {
-    return true;
-  }
-  isLock1(): boolean {
-    return false;
-  }
-  isLock2(): boolean {
-    return false;
-  }
-  isFlux(): boolean {
-    return false;
-  }
-  isUnbreakable(): boolean {
-    return false;
-  }
-  isStone(): boolean {
-    return false;
-  }
-}
-
-class Lock2 implements Tile {
-  update(x: number, y: number): void {
-    throw new Error("Method not implemented.");
-  }
-  canFall(): boolean {
-    throw new Error("Method not implemented.");
-  }
-  isFalling(): boolean {
-    throw new Error("Method not implemented.");
-  }
-  drop(): void {
-    throw new Error("Method not implemented.");
-  }
-  rest(): void {
-    throw new Error("Method not implemented.");
-  }
-  isStony(): boolean {
-    return false;
-  }
-  isBoxy(): boolean {
-    return false;
-  }
-  moveHorizontal(dx: number): void {
-    
-  }
-  draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = "#00ccff";
-    g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-  }
-  isAir(): boolean {
-    return false;
-  }
-  isPlayer(): boolean {
-    return false;
-  }
-  isFallingStone(): boolean {
-    return false;
-  }
-  isBox(): boolean {
-    return false;
-  }
-  isFallingBox(): boolean {
-    return false;
-  }
-  isKey1(): boolean {
-    return false;
-  }
-  isKey2(): boolean {
-    return false;
-  }
-  isLock1(): boolean {
-    return false;
-  }
-  isLock2(): boolean {
-    return true;
+    return this.lock2;
   }
   isFlux(): boolean {
     return false;
@@ -870,6 +779,8 @@ let rawMap: RawTile[][] = [
 
 let inputs: Input[] = [];
 
+const YELLOW_KEY = new KeyConfiguration("#ffcc00", true, new RemoveLock1());
+
 function assertExhausted(x: never): never {
   throw new Error("Unexpected object: " + x);
 }
@@ -884,10 +795,10 @@ function transformTile(tile: RawTile) {
     case RawTile.BOX: return new Box();
     case RawTile.FALLING_BOX: return new FallingBox();
     case RawTile.FLUX: return new Flux();
-    case RawTile.KEY1: return new Key1();
-    case RawTile.LOCK1: return new Lock1();
-    case RawTile.KEY2: return new Key2();
-    case RawTile.LOCK2: return new Lock2();
+    case RawTile.KEY1: return new Key("#ffcc00", new RemoveLock1());
+    case RawTile.LOCK1: return new Locker("#ffcc00", true, false);
+    case RawTile.KEY2: return new Key("#00ccff", new RemoveLock2());
+    case RawTile.LOCK2: return new Locker("#00ccff", false, true);
     default: assertExhausted(tile);
   }
 }
@@ -899,21 +810,6 @@ function transformMap() {
     for (let x = 0; x < rawMap[y].length; x++) {
       map[y][x] = transformTile(rawMap[y][x]);
     }
-  }
-}
-
-interface RemoveStrategy {
-  check(tile: Tile): boolean;
-}
-class RemoveLock1 implements RemoveStrategy {
-  check(tile: Tile): boolean {
-    return tile.isLock1();
-  }
-}
-
-class RemoveLock2 implements RemoveStrategy {
-  check(tile: Tile): boolean {
-    return tile.isLock2();
   }
 }
 
