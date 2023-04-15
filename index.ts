@@ -15,22 +15,20 @@ enum RawTile {
 }
 
 class KeyConfiguration {
+  setColor(g: CanvasRenderingContext2D, x: number, y: number) {
+    g.fillStyle = this.color;
+    g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+  }
+  removeLock() {
+    remove(this.removeStrategy);
+  }
   constructor(
     private color: string,
     private _1: boolean,
     private removeStrategy: RemoveStrategy
   ) {}
-
-  getColor() {
-    return this.color;
-  }
-
   is1() {
     return this._1;
-  }
-
-  getRemoveStrategy() {
-    return this.removeStrategy;
   }
 }
 
@@ -581,10 +579,6 @@ class Key implements Tile {
   constructor(
     private keyConf: KeyConfiguration
   ) {}
-  moveVertical(dy: number): void {
-    remove(this.keyConf.getRemoveStrategy());
-    moveToTile(playery, playerx + dy);
-  }
   update(x: number, y: number): void {
   }
   canFall(): boolean {
@@ -605,13 +599,16 @@ class Key implements Tile {
   isBoxy(): boolean {
     return false;
   }
+  moveVertical(dy: number): void {
+    this.keyConf.removeLock();
+    moveToTile(playery, playerx + dy);
+  }
   moveHorizontal(dx: number): void {
-    remove(this.keyConf.getRemoveStrategy());
+    this.keyConf.removeLock();
     moveToTile(playerx + dx, playery);
   }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = this.keyConf.getColor();
-    g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    this.keyConf.setColor(g, x, y);
   }
   isAir(): boolean {
     return false;
@@ -682,8 +679,7 @@ class Locker implements Tile {
   
   }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = this.keyConf.getColor();
-    g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    this.keyConf.setColor(g, x, y);
   }
   isAir(): boolean {
     return false;
