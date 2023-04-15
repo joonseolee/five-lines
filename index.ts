@@ -39,6 +39,23 @@ class Resting implements FallingState {
     return false;
   }
 }
+
+class FallStrategy {
+  constructor(private falling: FallingState) {}
+  getFalling() {
+    return this.falling;
+  }
+  update(tile: Tile, x: number, y: number) {
+    if (map[y + 1][x].isAir()) {
+      map[y][x].drop();
+      map[y + 1][x] = tile;
+      map[y][x] = new Air();
+    } else {
+      map[y][x].rest();
+    }
+  }
+}
+
 interface Input {
   handle(): void
 }
@@ -88,9 +105,13 @@ interface Tile {
   rest(): void;
   isFalling(): boolean;
   canFall(): boolean;
+  update(x: number, y: number): void;
 }
 
 class Air implements Tile {
+  update(x: number, y: number): void {
+    throw new Error("Method not implemented.");
+  }
   canFall(): boolean {
     throw new Error("Method not implemented.");
   }
@@ -153,6 +174,9 @@ class Air implements Tile {
 }
 
 class Flux implements Tile {
+  update(x: number, y: number): void {
+    throw new Error("Method not implemented.");
+  }
   canFall(): boolean {
     throw new Error("Method not implemented.");
   }
@@ -217,6 +241,9 @@ class Flux implements Tile {
 }
 
 class Unbreakable implements Tile {
+  update(x: number, y: number): void {
+    throw new Error("Method not implemented.");
+  }
   canFall(): boolean {
     throw new Error("Method not implemented.");
   }
@@ -281,6 +308,9 @@ class Unbreakable implements Tile {
 }
 
 class Player implements Tile {
+  update(x: number, y: number): void {
+    throw new Error("Method not implemented.");
+  }
   canFall(): boolean {
     throw new Error("Method not implemented.");
   }
@@ -343,7 +373,13 @@ class Player implements Tile {
 }
 
 class Stone implements Tile {
-  constructor(private falling: FallingState) {}
+  private fallStrategy: FallStrategy;
+  constructor(private falling: FallingState) {
+    this.fallStrategy = new FallStrategy(falling);
+  }
+  update(x: number, y: number): void {
+    this.fallStrategy.update(this, x, y);
+  }
   canFall(): boolean {
     return true;
   }
@@ -363,7 +399,7 @@ class Stone implements Tile {
     return false;
   }
   moveHorizontal(dx: number): void {
-    this.falling.moveHorizontal(this, dx);
+    this.fallStrategy.getFalling().moveHorizontal(this, dx);
   }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
     g.fillStyle = "#0000cc";
@@ -408,6 +444,9 @@ class Stone implements Tile {
 }
 
 class Box implements Tile {
+  update(x: number, y: number): void {
+    throw new Error("Method not implemented.");
+  }
   canFall(): boolean {
     return true;
   }
@@ -476,6 +515,9 @@ class Box implements Tile {
 }
 
 class FallingBox implements Tile {
+  update(x: number, y: number): void {
+    throw new Error("Method not implemented.");
+  }
   canFall(): boolean {
     return true;
   }
@@ -540,6 +582,9 @@ class FallingBox implements Tile {
 }
 
 class Key1 implements Tile {
+  update(x: number, y: number): void {
+    throw new Error("Method not implemented.");
+  }
   canFall(): boolean {
     throw new Error("Method not implemented.");
   }
@@ -605,6 +650,9 @@ class Key1 implements Tile {
 }
 
 class Lock1 implements Tile {
+  update(x: number, y: number): void {
+    throw new Error("Method not implemented.");
+  }
   canFall(): boolean {
     throw new Error("Method not implemented.");
   }
@@ -669,6 +717,9 @@ class Lock1 implements Tile {
 }
 
 class Key2 implements Tile {
+  update(x: number, y: number): void {
+    throw new Error("Method not implemented.");
+  }
   canFall(): boolean {
     throw new Error("Method not implemented.");
   }
@@ -734,6 +785,9 @@ class Key2 implements Tile {
 }
 
 class Lock2 implements Tile {
+  update(x: number, y: number): void {
+    throw new Error("Method not implemented.");
+  }
   canFall(): boolean {
     throw new Error("Method not implemented.");
   }
@@ -895,19 +949,8 @@ function update() {
 function updateMap() {
   for (let y = map.length - 1; y >= 0; y--) {
     for (let x = 0; x < map[y].length; x++) {
-      updateTile(y, x);
+      map[y][x].update(x, y);
     }
-  }
-}
-
-function updateTile(y: number, x: number) {
-  if ((map[y][x].canFall())
-  && map[y + 1][x].isAir()) {
-    map[y][x].drop();
-    map[y + 1][x] = map[y][x];
-    map[y][x] = new Air();
-  } else if (map[y][x].isFalling()) {
-    map[y][x].rest();
   }
 }
 
