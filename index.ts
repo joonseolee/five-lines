@@ -52,9 +52,12 @@ class RemoveLock2 implements RemoveStrategy {
 interface FallingState {
   isFalling(): boolean;
   moveHorizontal(tile: Tile, dx: number): void;
+  moveVertical(tile: Tile, dx: number): void;
 }
 
 class Falling implements FallingState {
+  moveVertical(tile: Tile, dx: number): void {
+  }
   moveHorizontal(tile: Tile, dx: number): void {
   }
   isFalling(): boolean {
@@ -63,6 +66,18 @@ class Falling implements FallingState {
 }
 
 class Resting implements FallingState {
+  moveVertical(tile: Tile, dy: number): void {
+    if (map[playery + dy][playerx].isFlux()
+      || map[playery + dy][playerx].isAir()) {
+      moveToTile(playerx, playery + dy);
+    } else if (map[playery + dy][playerx].isKey1()) {
+      remove(new RemoveLock1());
+      moveToTile(playerx, playery + dy);
+    } else if (map[playery + dy][playerx].isKey2()) {
+      remove(new RemoveLock2());
+      moveToTile(playerx, playery + dy);
+    }
+  }
   moveHorizontal(tile: Tile, dx: number): void {
     if (map[playery][playerx + dx + dx].isAir()
     && !map[playery + 1][playerx + dx].isAir()) {
@@ -139,6 +154,7 @@ interface Tile {
   isLock2(): boolean;
   draw(g: CanvasRenderingContext2D, x: number, y: number): void;
   moveHorizontal(dx: number): void;
+  moveVertical(dy: number): void;
   isStony(): boolean;
   isBoxy(): boolean;
   drop(): void;
@@ -149,6 +165,9 @@ interface Tile {
 }
 
 class Air implements Tile {
+  moveVertical(dx: number): void {
+    throw new Error("Method not implemented.");
+  }
   update(x: number, y: number): void {
     throw new Error("Method not implemented.");
   }
@@ -214,6 +233,9 @@ class Air implements Tile {
 }
 
 class Flux implements Tile {
+  moveVertical(dx: number): void {
+    throw new Error("Method not implemented.");
+  }
   update(x: number, y: number): void {
     throw new Error("Method not implemented.");
   }
@@ -281,6 +303,9 @@ class Flux implements Tile {
 }
 
 class Unbreakable implements Tile {
+  moveVertical(dy: number): void {
+    throw new Error("Method not implemented.");
+  }
   update(x: number, y: number): void {
     throw new Error("Method not implemented.");
   }
@@ -348,6 +373,9 @@ class Unbreakable implements Tile {
 }
 
 class Player implements Tile {
+  moveVertical(dy: number): void {
+    throw new Error("Method not implemented.");
+  }
   update(x: number, y: number): void {
     throw new Error("Method not implemented.");
   }
@@ -438,6 +466,9 @@ class Stone implements Tile {
   isBoxy(): boolean {
     return false;
   }
+  moveVertical(dy: number): void {
+    this.fallStrategy.getFalling().moveVertical(this, dy);
+  }
   moveHorizontal(dx: number): void {
     this.fallStrategy.getFalling().moveHorizontal(this, dx);
   }
@@ -484,6 +515,10 @@ class Stone implements Tile {
 }
 
 class Box implements Tile {
+  private fallStrategy: FallStrategy;
+  constructor(private falling: FallingState) {
+    this.fallStrategy = new FallStrategy(falling);
+  }
   update(x: number, y: number): void {
     throw new Error("Method not implemented.");
   }
@@ -505,12 +540,11 @@ class Box implements Tile {
   isBoxy(): boolean {
     return true;
   }
+  moveVertical(dy: number): void {
+    this.fallStrategy.getFalling().moveVertical(this, dy);
+  }
   moveHorizontal(dx: number): void {
-    if (map[playery][playerx + dx + dx].isAir()
-    && !map[playery + 1][playerx + dx].isAir()) {
-      map[playery][playerx + dx + dx] = this;
-      moveToTile(playerx + dx, playery);
-    }
+    this.fallStrategy.getFalling().moveHorizontal(this, dx);
   }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
     g.fillStyle = "#8b4513";
@@ -530,73 +564,6 @@ class Box implements Tile {
   }
   isFallingBox(): boolean {
     return false;
-  }
-  isKey1(): boolean {
-    return false;
-  }
-  isKey2(): boolean {
-    return false;
-  }
-  isLock1(): boolean {
-    return false;
-  }
-  isLock2(): boolean {
-    return false;
-  }
-  isFlux(): boolean {
-    return false;
-  }
-  isUnbreakable(): boolean {
-    return false;
-  }
-  isStone(): boolean {
-    return false;
-  }
-}
-
-class FallingBox implements Tile {
-  update(x: number, y: number): void {
-    throw new Error("Method not implemented.");
-  }
-  canFall(): boolean {
-    return true;
-  }
-  isFalling(): boolean {
-    return true;
-  }
-  drop(): void {
-    throw new Error("Method not implemented.");
-  }
-  rest(): void {
-    throw new Error("Method not implemented.");
-  }
-  isStony(): boolean {
-    return false;
-  }
-  isBoxy(): boolean {
-    return true;
-  }
-  moveHorizontal(dx: number): void {
-    
-  }
-  draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = "#8b4513";
-    g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-  }
-  isAir(): boolean {
-    return false;
-  }
-  isPlayer(): boolean {
-    return false;
-  }
-  isFallingStone(): boolean {
-    return false;
-  }
-  isBox(): boolean {
-    return false;
-  }
-  isFallingBox(): boolean {
-    return true;
   }
   isKey1(): boolean {
     return false;
@@ -623,9 +590,12 @@ class FallingBox implements Tile {
 
 class Key implements Tile {
   constructor(
-    private color: string,
-    private removeStrategy: RemoveStrategy
+    private keyConf: KeyConfiguration
   ) {}
+  moveVertical(dy: number): void {
+    remove(this.keyConf.getRemoveStrategy());
+    moveToTile(playery, playerx + dy);
+  }
   update(x: number, y: number): void {
     throw new Error("Method not implemented.");
   }
@@ -648,11 +618,11 @@ class Key implements Tile {
     return false;
   }
   moveHorizontal(dx: number): void {
-    remove(this.removeStrategy);
+    remove(this.keyConf.getRemoveStrategy());
     moveToTile(playerx + dx, playery);
   }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = this.color;
+    g.fillStyle = this.keyConf.getColor();
     g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
   isAir(): boolean {
@@ -695,10 +665,11 @@ class Key implements Tile {
 
 class Locker implements Tile {
   constructor(
-    private color: string,
-    private lock1: boolean,
-    private lock2: boolean
+    private keyConf: KeyConfiguration
   ) {}
+  moveVertical(dy: number): void {
+    throw new Error("Method not implemented.");
+  }
   update(x: number, y: number): void {
     throw new Error("Method not implemented.");
   }
@@ -724,7 +695,7 @@ class Locker implements Tile {
   
   }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = this.color;
+    g.fillStyle = this.keyConf.getColor();
     g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
   isAir(): boolean {
@@ -749,10 +720,10 @@ class Locker implements Tile {
     return false;
   }
   isLock1(): boolean {
-    return this.lock1;
+    return this.keyConf.is1();
   }
   isLock2(): boolean {
-    return this.lock2;
+    return !this.keyConf.is1();
   }
   isFlux(): boolean {
     return false;
@@ -780,6 +751,7 @@ let rawMap: RawTile[][] = [
 let inputs: Input[] = [];
 
 const YELLOW_KEY = new KeyConfiguration("#ffcc00", true, new RemoveLock1());
+const BLUE_KEY = new KeyConfiguration("#00ccff", false, new RemoveLock1());
 
 function assertExhausted(x: never): never {
   throw new Error("Unexpected object: " + x);
@@ -792,13 +764,13 @@ function transformTile(tile: RawTile) {
     case RawTile.UNBREAKABLE: return new Unbreakable();
     case RawTile.STONE: return new Stone(new Resting());
     case RawTile.FALLING_STONE: return new Stone(new Falling());
-    case RawTile.BOX: return new Box();
-    case RawTile.FALLING_BOX: return new FallingBox();
+    case RawTile.BOX: return new Box(new Resting());
+    case RawTile.FALLING_BOX: return new Box(new Falling())
     case RawTile.FLUX: return new Flux();
-    case RawTile.KEY1: return new Key("#ffcc00", new RemoveLock1());
-    case RawTile.LOCK1: return new Locker("#ffcc00", true, false);
-    case RawTile.KEY2: return new Key("#00ccff", new RemoveLock2());
-    case RawTile.LOCK2: return new Locker("#00ccff", false, true);
+    case RawTile.KEY1: return new Key(YELLOW_KEY);
+    case RawTile.LOCK1: return new Locker(YELLOW_KEY);
+    case RawTile.KEY2: return new Key(BLUE_KEY);
+    case RawTile.LOCK2: return new Locker(BLUE_KEY);
     default: assertExhausted(tile);
   }
 }
@@ -835,16 +807,7 @@ function moveHorizontal(dx: number) {
 }
 
 function moveVertical(dy: number) {
-  if (map[playery + dy][playerx].isFlux()
-    || map[playery + dy][playerx].isAir()) {
-    moveToTile(playerx, playery + dy);
-  } else if (map[playery + dy][playerx].isKey1()) {
-    remove(new RemoveLock1());
-    moveToTile(playerx, playery + dy);
-  } else if (map[playery + dy][playerx].isKey2()) {
-    remove(new RemoveLock2());
-    moveToTile(playerx, playery + dy);
-  }
+  map[playerx][playery + dy].moveVertical(dy);
 }
 
 function update() {
