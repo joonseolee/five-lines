@@ -67,16 +67,6 @@ class Falling implements FallingState {
 
 class Resting implements FallingState {
   moveVertical(tile: Tile, dy: number): void {
-    if (map[playery + dy][playerx].isFlux()
-      || map[playery + dy][playerx].isAir()) {
-      moveToTile(playerx, playery + dy);
-    } else if (map[playery + dy][playerx].isKey1()) {
-      remove(new RemoveLock1());
-      moveToTile(playerx, playery + dy);
-    } else if (map[playery + dy][playerx].isKey2()) {
-      remove(new RemoveLock2());
-      moveToTile(playerx, playery + dy);
-    }
   }
   moveHorizontal(tile: Tile, dx: number): void {
     if (map[playery][playerx + dx + dx].isAir()
@@ -169,7 +159,7 @@ class Air implements Tile {
     throw new Error("Method not implemented.");
   }
   update(x: number, y: number): void {
-    throw new Error("Method not implemented.");
+    
   }
   canFall(): boolean {
     throw new Error("Method not implemented.");
@@ -237,7 +227,7 @@ class Flux implements Tile {
     throw new Error("Method not implemented.");
   }
   update(x: number, y: number): void {
-    throw new Error("Method not implemented.");
+    
   }
   canFall(): boolean {
     throw new Error("Method not implemented.");
@@ -304,10 +294,10 @@ class Flux implements Tile {
 
 class Unbreakable implements Tile {
   moveVertical(dy: number): void {
-    throw new Error("Method not implemented.");
+    
   }
   update(x: number, y: number): void {
-    throw new Error("Method not implemented.");
+    
   }
   canFall(): boolean {
     throw new Error("Method not implemented.");
@@ -377,7 +367,6 @@ class Player implements Tile {
     throw new Error("Method not implemented.");
   }
   update(x: number, y: number): void {
-    throw new Error("Method not implemented.");
   }
   canFall(): boolean {
     throw new Error("Method not implemented.");
@@ -452,7 +441,7 @@ class Stone implements Tile {
     return true;
   }
   isFalling(): boolean {
-    return this.falling.isFalling();
+    return this.fallStrategy.getFalling().isFalling();
   }
   drop(): void {
     this.falling = new Falling();
@@ -520,13 +509,13 @@ class Box implements Tile {
     this.fallStrategy = new FallStrategy(falling);
   }
   update(x: number, y: number): void {
-    throw new Error("Method not implemented.");
+    this.fallStrategy.update(this, x, y);
   }
   canFall(): boolean {
     return true;
   }
   isFalling(): boolean {
-    throw new Error("Method not implemented.");
+    return this.fallStrategy.getFalling().isFalling();
   }
   drop(): void {
     throw new Error("Method not implemented.");
@@ -597,7 +586,6 @@ class Key implements Tile {
     moveToTile(playery, playerx + dy);
   }
   update(x: number, y: number): void {
-    throw new Error("Method not implemented.");
   }
   canFall(): boolean {
     throw new Error("Method not implemented.");
@@ -671,7 +659,6 @@ class Locker implements Tile {
     throw new Error("Method not implemented.");
   }
   update(x: number, y: number): void {
-    throw new Error("Method not implemented.");
   }
   canFall(): boolean {
     throw new Error("Method not implemented.");
@@ -807,7 +794,17 @@ function moveHorizontal(dx: number) {
 }
 
 function moveVertical(dy: number) {
-  map[playerx][playery + dy].moveVertical(dy);
+  if (map[playery + dy][playerx].isFlux()
+      || map[playery + dy][playerx].isAir()) {
+      moveToTile(playerx, playery + dy);
+    } else if (map[playery + dy][playerx].isKey1()) {
+      remove(new RemoveLock1());
+      moveToTile(playerx, playery + dy);
+    } else if (map[playery + dy][playerx].isKey2()) {
+      remove(new RemoveLock2());
+      moveToTile(playerx, playery + dy);
+    }
+  // map[playerx][playery + dy].moveVertical(dy);
 }
 
 function update() {
