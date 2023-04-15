@@ -51,9 +51,14 @@ interface FallingState {
   isFalling(): boolean;
   moveHorizontal(tile: Tile, dx: number): void;
   moveVertical(tile: Tile, dx: number): void;
+  drop(tile: Tile, x: number, y: number): void;
 }
 
 class Falling implements FallingState {
+  drop(tile: Tile, x: number, y: number): void {
+    map[y + 1][x] = tile;
+    map[y][x] = new Air();
+  }
   moveVertical(tile: Tile, dx: number): void {
   }
   moveHorizontal(tile: Tile, dx: number): void {
@@ -64,6 +69,8 @@ class Falling implements FallingState {
 }
 
 class Resting implements FallingState {
+  drop(tile: Tile, x: number, y: number): void {
+  }
   moveVertical(tile: Tile, dy: number): void {
   }
   moveHorizontal(tile: Tile, dx: number): void {
@@ -79,24 +86,17 @@ class Resting implements FallingState {
 }
 
 class FallStrategy {
-  constructor(private falling: FallingState) {}
-  getFalling() {
-    return this.falling;
+  moveVertical(tile: Tile, dy: number) {
+    this.falling.moveVertical(tile, dy);
+  }
+  moveHorizontal(tile: Tile, dx: number) {
+    this.falling.moveHorizontal(tile, dx);
   }
   update(tile: Tile, x: number, y: number) {
-    this.falling = map[y + 1][x].isAir() 
-    ? new Falling()
-    : new Resting();
-
-    this.drop(tile, x, y);
+    this.falling = map[y + 1][x].getBlockOnTopState();
+    this.falling.drop(tile, x, y);
   }
-
-  drop(tile: Tile, x: number, y: number) {
-    if (this.falling.isFalling()) {
-      map[y + 1][x] = tile;
-      map[y][x] = new Air();
-    }
-  }
+  constructor(private falling: FallingState) {}
 }
 
 interface Input {
@@ -150,9 +150,13 @@ interface Tile {
   isFalling(): boolean;
   canFall(): boolean;
   update(x: number, y: number): void;
+  getBlockOnTopState(): FallingState;
 }
 
 class Air implements Tile {
+  getBlockOnTopState(): FallingState {
+    return new Falling();
+  }
   moveVertical(dx: number): void {
     throw new Error("Method not implemented.");
   }
@@ -221,6 +225,9 @@ class Air implements Tile {
 }
 
 class Flux implements Tile {
+  getBlockOnTopState(): FallingState {
+    return new Resting();
+  }
   moveVertical(dx: number): void {
     throw new Error("Method not implemented.");
   }
@@ -291,6 +298,9 @@ class Flux implements Tile {
 }
 
 class Unbreakable implements Tile {
+  getBlockOnTopState(): FallingState {
+    return new Resting();
+  }
   moveVertical(dy: number): void {
     
   }
@@ -361,6 +371,9 @@ class Unbreakable implements Tile {
 }
 
 class Player implements Tile {
+  getBlockOnTopState(): FallingState {
+    return new Resting();
+  }
   moveVertical(dy: number): void {
     throw new Error("Method not implemented.");
   }
@@ -432,6 +445,9 @@ class Stone implements Tile {
   constructor(private falling: FallingState) {
     this.fallStrategy = new FallStrategy(falling);
   }
+  getBlockOnTopState(): FallingState {
+    return new Resting();
+  }
   update(x: number, y: number): void {
     this.fallStrategy.update(this, x, y);
   }
@@ -439,7 +455,7 @@ class Stone implements Tile {
     return true;
   }
   isFalling(): boolean {
-    return this.fallStrategy.getFalling().isFalling();
+    return this.falling.isFalling();
   }
   drop(): void {
     this.falling = new Falling();
@@ -454,10 +470,10 @@ class Stone implements Tile {
     return false;
   }
   moveVertical(dy: number): void {
-    this.fallStrategy.getFalling().moveVertical(this, dy);
+    this.fallStrategy.moveVertical(this, dy);
   }
   moveHorizontal(dx: number): void {
-    this.fallStrategy.getFalling().moveHorizontal(this, dx);
+    this.fallStrategy.moveHorizontal(this, dx);
   }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
     g.fillStyle = "#0000cc";
@@ -506,6 +522,9 @@ class Box implements Tile {
   constructor(private falling: FallingState) {
     this.fallStrategy = new FallStrategy(falling);
   }
+  getBlockOnTopState(): FallingState {
+    return new Resting();
+  }
   update(x: number, y: number): void {
     this.fallStrategy.update(this, x, y);
   }
@@ -513,7 +532,7 @@ class Box implements Tile {
     return true;
   }
   isFalling(): boolean {
-    return this.fallStrategy.getFalling().isFalling();
+    return this.falling.isFalling();
   }
   drop(): void {
     throw new Error("Method not implemented.");
@@ -528,10 +547,10 @@ class Box implements Tile {
     return true;
   }
   moveVertical(dy: number): void {
-    this.fallStrategy.getFalling().moveVertical(this, dy);
+    this.fallStrategy.moveVertical(this, dy);
   }
   moveHorizontal(dx: number): void {
-    this.fallStrategy.getFalling().moveHorizontal(this, dx);
+    this.fallStrategy.moveHorizontal(this, dx);
   }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
     g.fillStyle = "#8b4513";
@@ -579,6 +598,9 @@ class Key implements Tile {
   constructor(
     private keyConf: KeyConfiguration
   ) {}
+  getBlockOnTopState(): FallingState {
+    return new Resting();
+  }
   update(x: number, y: number): void {
   }
   canFall(): boolean {
@@ -652,6 +674,9 @@ class Locker implements Tile {
   constructor(
     private keyConf: KeyConfiguration
   ) {}
+  getBlockOnTopState(): FallingState {
+    return new Resting();
+  }
   moveVertical(dy: number): void {
     throw new Error("Method not implemented.");
   }
